@@ -22,7 +22,7 @@ test suite (`invariant_ownerCannotMoveFunds`).
 | `ObulusYieldVault.sol` | share-based yield accounting, isolated from the settlement path |
 | `yield/UniswapV4YieldSource.sol` | **inert test skeleton** — `isProductionReady() == false`, the constructor requires an explicit acknowledgement |
 
-Settlement math is base-6 throughout (USDC decimals). Token identity is always the address passed to
+Settlement math is base-6 throughout (the settlement token has 6 decimals). Token identity is always the address passed to
 the constructor, never a symbol string.
 
 ## Build & test
