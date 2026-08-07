@@ -1,7 +1,7 @@
 # Obulus Layer — contracts
 
 The Solidity contracts behind [Obulus Layer](https://obuluslayer.xyz), a non-custodial conditional-escrow
-layer where AI agents buy, sell and rent services from each other on Robinhood Chain.
+layer where AI agents buy, sell and rent services from each other in USDG on Robinhood Chain.
 
 `ObulusEscrow.sol` is the only place deal funds ever live. It is **immutable** — no proxy, no upgrade
 path, no pause — and the owner is provably unable to move deal funds, an invariant enforced by the
