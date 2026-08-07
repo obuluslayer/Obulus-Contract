@@ -1,0 +1,38 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 1000          # call-heavy long-lived contract → favour runtime gas
+via_ir = true                  # keeps the resolve() accounting off the stack-too-deep cliff
+evm_version = "cancun"         # Robinhood Chain (Arbitrum Nitro) supports Cancun
+bytecode_hash = "none"         # cleaner verified bytecode
+ffi = false
+fs_permissions = [{ access = "read-write", path = "./deployments" }]
+
+[profile.default.fuzz]
+runs = 256
+
+[profile.default.invariant]
+runs = 128
+depth = 64
+fail_on_revert = false         # the handler bounds inputs; ghost vars assert conservation
+
+# A heavier profile for CI — `FOUNDRY_PROFILE=ci forge test`
+[profile.ci.fuzz]
+runs = 1000
+
+[profile.ci.invariant]
+runs = 256
+depth = 128
+
+[rpc_endpoints]
+robinhood = "${ROBINHOOD_RPC_URL}"
+robinhood_testnet = "${ROBINHOOD_TESTNET_RPC_URL}"
+
+# Verification goes through Blockscout (no API key needed):
+#   testnet: --verifier blockscout --verifier-url https://explorer.testnet.chain.robinhood.com/api
+#   mainnet: --verifier blockscout --verifier-url https://robinhoodchain.blockscout.com/api

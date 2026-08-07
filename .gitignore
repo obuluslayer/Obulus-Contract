@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SECRETS — NEVER COMMIT. .env.deployer holds the funded deployer PRIVATE KEY
+# that becomes the Escrow owner. Losing it to a public repo means losing the
+# contract. Keep it chmod 600 and never paste its value anywhere.
+# ─────────────────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+.env.deployer*
+*.key
+*.pem
+
+# Foundry build output
+out/
+cache/
+
+# forge script artefacts — dry-run + broadcast logs are local, and run-latest.json
+# records the sender address and full calldata of every deploy.
+broadcast/
+
+*.log
+.DS_Store
