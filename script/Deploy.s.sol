@@ -11,7 +11,7 @@ import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 ///
 /// Env (all optional, sensible defaults):
 ///   PRIVATE_KEY      deployer key (falls back to the unlocked sender / anvil default)
-///   USDC_ADDRESS     override the settlement token
+///   USDG_ADDRESS     override the settlement token (USDC_ADDRESS still accepted)
 ///   TREASURY_ADDRESS commission sink (defaults to the deployer)
 ///   FEE_BPS          protocol commission, default 100 (1%)
 ///   ARB_FEE_BPS      arbitration fee as a fraction of the slashed bond, default 2000 (20%)
@@ -54,9 +54,10 @@ contract Deploy is Script {
         // comes from env; USE_MOCK_USDC=true / the local fallback deploy a freely-mintable MockUSDC
         // (testnet liquidity for the arena bots, local dev).
         if (vm.envOr("USE_MOCK_USDC", false)) return address(new MockUSDC());
-        address fromEnv = vm.envOr("USDC_ADDRESS", address(0));
+        // USDG_ADDRESS is the current name; USDC_ADDRESS stays accepted through the rename.
+        address fromEnv = vm.envOr("USDG_ADDRESS", vm.envOr("USDC_ADDRESS", address(0)));
         if (fromEnv != address(0)) return fromEnv;
-        require(block.chainid != 4663, "Robinhood mainnet: set USDC_ADDRESS (no MockUSDC fallback)");
+        require(block.chainid != 4663, "Robinhood mainnet: set USDG_ADDRESS (no MockUSDC fallback)");
         return address(new MockUSDC());
     }
 

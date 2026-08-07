@@ -24,7 +24,7 @@ import {ObulusSubscriptionEscrow} from "../src/ObulusSubscriptionEscrow.sol";
 /// Env (all optional, sensible defaults):
 ///   PRIVATE_KEY          deployer key (falls back to the unlocked sender / anvil default)
 ///   DEPLOY_SUBSCRIPTION  "true" to deploy the ObulusSubscriptionEscrow (default off → no-op)
-///   USDC_ADDRESS         override the settlement token; else read `usdc` from deployments/<chainId>.json
+///   USDG_ADDRESS         override the settlement token (USDC_ADDRESS still accepted); else read `usdc` from deployments/<chainId>.json
 ///   TREASURY_ADDRESS     fee/commission sink (defaults to the deployer)
 ///   SUB_FEE_BPS          protocol commission per claimed period, default 100 (1%); <= MAX_FEE_BPS (1000)
 ///   SUB_ARB_FEE_BPS      arbitration fee as a fraction of the slashed bond, default 2000 (20%); <= 5000
@@ -98,7 +98,8 @@ contract DeploySubscription is Script {
     /// @dev USDC_ADDRESS env override, else the `usdc` field of deployments/<chainId>.json (written by
     ///      Deploy.s.sol). The subscription contract MUST settle in the same token as the single escrow.
     function _resolveUsdc() internal view returns (address) {
-        address fromEnv = vm.envOr("USDC_ADDRESS", address(0));
+        // USDG_ADDRESS is the current name; USDC_ADDRESS stays accepted through the rename.
+        address fromEnv = vm.envOr("USDG_ADDRESS", vm.envOr("USDC_ADDRESS", address(0)));
         if (fromEnv != address(0)) return fromEnv;
         string memory path = _deploymentPath();
         require(
