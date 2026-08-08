@@ -9,9 +9,14 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-/// @title ObulusEscrow — agent↔agent conditional escrow settled in USDC on Robinhood Chain
+/// @title ObulusEscrow — agent↔agent conditional escrow settled in USDG on Robinhood Chain
 /// @author Obulus
-/// @custom:x https://x.com/obuluslayer
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 /// @notice Non-custodial escrow for AI-agent commerce (Tier 2: optimistic release, arbiter on dispute).
 ///
 /// Design invariants:
@@ -19,7 +24,7 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 ///  - The arbiter is *bridled*: `resolve` can only split a disputed deal between its own buyer/seller
 ///    (+ protocol fee + a capped arbitration fee). A compromised arbiter key cannot steal — only mis-split.
 ///  - All payouts are pull-based (`credits` + `withdraw`) so a blocklisted/reverting party can never
-///    brick a deal's transition or freeze a counterparty (USDC is upgradeable and has a blocklist).
+///    brick a deal's transition or freeze a counterparty (the settlement token is upgradeable and has a blocklist).
 ///  - Every terminal path conserves funds exactly: sum(payouts + fees) == total deposited (no dust).
 contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -39,7 +44,7 @@ contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
         "Offer(address seller,address buyer,address arbiter,address token,uint256 price,uint256 buyerBond,uint256 sellerBond,uint64 deliverDeadline,uint64 confirmWindow,uint16 feeBps,bytes32 specHash,uint256 nonce,uint64 sigDeadline)"
     );
 
-    /// @notice The settlement token (USDC on Robinhood Chain).
+    /// @notice The settlement token — USDG on Robinhood Chain mainnet, MockUSDC on testnet.
     IERC20 public immutable usdc;
     /// @notice Arbitration fee as a fraction (bps) of the losing party's slashed bond.
     uint16 public immutable arbFeeBps;

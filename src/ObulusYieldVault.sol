@@ -10,14 +10,19 @@ import {IYieldSource} from "./interfaces/IYieldSource.sol";
 
 /// @title ObulusYieldVault — OPT-IN, share-accounted surplus vault for agents & the protocol treasury
 /// @author Obulus
-/// @custom:x https://x.com/obuluslayer
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 /// @notice A NEW, fully standalone contract. It is NOT part of the escrow settlement path and has NO
 ///         reference to any `ObulusEscrow`/`ObulusSubscriptionEscrow`/deal. It lets an agent (or the treasury) deposit
-///         its OWN idle/surplus USDC — never escrow principal or bonds — and earn yield via a pluggable
+///         its OWN idle/surplus USDG — never escrow principal or bonds — and earn yield via a pluggable
 ///         yield source. Withdrawals are share-accounted and pull-based.
 ///
 /// WHY THIS SHAPE (the lead architect's non-negotiable safety model):
-///  The tempting-but-UNSAFE idea is "lock a deal's USDC into a pool while it's being processed." That is
+///  The tempting-but-UNSAFE idea is "lock a deal's USDG into a pool while it's being processed." That is
 ///  REJECTED: a pool can lose value, be illiquid, or slip, which would break the escrow's conservation
 ///  invariant (principal + bonds must always settle in full). This vault sidesteps that ENTIRELY by being a
 ///  separate opt-in contract that only ever holds funds someone VOLUNTARILY deposited as surplus. ObulusEscrow is
@@ -25,9 +30,9 @@ import {IYieldSource} from "./interfaces/IYieldSource.sol";
 ///  deal's funds into this vault or its source.
 ///
 /// REDEEMABILITY / FLOOR GUARANTEE — stated honestly, do NOT over-read it:
-///  - With NO yield source set (the default, and the safe pass-through), the vault holds USDC directly and is
-///    EXACTLY 1:1 redeemable: 1 share is minted per USDC on the first deposit and share price stays 1.0
-///    because `totalAssets()` == the vault's own USDC balance. No depositor can ever redeem less than they
+///  - With NO yield source set (the default, and the safe pass-through), the vault holds USDG directly and is
+///    EXACTLY 1:1 redeemable: 1 share is minted per USDG on the first deposit and share price stays 1.0
+///    because `totalAssets()` == the vault's own USDG balance. No depositor can ever redeem less than they
 ///    put in (absent a source).
 ///  - With a PRINCIPAL-PROTECTED source (e.g. `MockYieldSource`, which only ever accrues), share price rises
 ///    monotonically and every depositor redeems principal + their fair share of yield.
@@ -38,14 +43,14 @@ import {IYieldSource} from "./interfaces/IYieldSource.sol";
 ///    the admin still can NEVER seize funds (see below).
 ///
 /// CONSERVATION / SOLVENCY INVARIANT (mirrors ObulusEscrow.sol's discipline):
-///  - `totalAssets()` == idle USDC held by the vault + `source.totalAssets()` (0 if no source).
+///  - `totalAssets()` == idle USDG held by the vault + `source.totalAssets()` (0 if no source).
 ///  - Σ over depositors of `convertToAssets(balanceOf)` <= `totalAssets()` at all times (share math rounds
 ///    in the vault's favour, never a depositor's, so the vault can always honour every redemption against
 ///    what it can actually recover). With the null/Mock source this is an exact-or-favourable identity; with
 ///    a lossy source it still holds because both sides scale by the same (possibly < 1) recovery factor.
 ///  - The owner has NO power to move or seize deposits: admin is limited to {set/clear the yield source,
 ///    pause/unpause, set a withdrawal fee bounded by MAX_WITHDRAW_FEE_BPS that accrues to the treasury}.
-///    Switching the source moves USDC between the vault and a source the OWNER trusts — it can never send a
+///    Switching the source moves USDG between the vault and a source the OWNER trusts — it can never send a
 ///    depositor's funds to the owner. CEI + ReentrancyGuard + SafeERC20 throughout.
 contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
@@ -67,7 +72,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     uint256 internal constant VIRTUAL_SHARES = 1e3;
     uint256 internal constant VIRTUAL_ASSETS = 1;
 
-    /// @notice The underlying token (USDC on Robinhood Chain). 6 decimals.
+    /// @notice The underlying token — USDG on Robinhood Chain mainnet, MockUSDC on testnet. 6 decimals.
     IERC20 public immutable asset;
 
     // ---------------------------------------------------------------------------------------------
@@ -118,7 +123,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     // Constructor
     // ---------------------------------------------------------------------------------------------
 
-    /// @param asset_    The underlying token (USDC). Immutable.
+    /// @param asset_    The underlying token (USDG). Immutable.
     /// @param treasury_ Fee beneficiary (the protocol treasury). Can be updated by the owner.
     constructor(address asset_, address treasury_) Ownable(msg.sender) {
         if (asset_ == address(0) || treasury_ == address(0)) revert ZeroAddress();
@@ -131,7 +136,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     // Valuation / share math
     // ---------------------------------------------------------------------------------------------
 
-    /// @notice Total USDC the vault can account for: idle USDC it holds directly + what the source reports.
+    /// @notice Total USDG the vault can account for: idle USDG it holds directly + what the source reports.
     ///         This is the single source of truth for share price. With no source it equals the vault's own
     ///         balance (→ exact 1:1). With a lossy source it can be LESS than total deposits (honest).
     function totalAssets() public view returns (uint256) {
@@ -184,17 +189,17 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     // deposit / withdraw / redeem
     // ---------------------------------------------------------------------------------------------
 
-    /// @notice Deposit `assets` USDC and mint shares to `receiver`. Pulls USDC from `msg.sender` (who must
-    ///         have approved the vault). If a source is set, the idle USDC is routed to it. CEI: shares are
+    /// @notice Deposit `assets` USDG and mint shares to `receiver`. Pulls USDG from `msg.sender` (who must
+    ///         have approved the vault). If a source is set, the idle USDG is routed to it. CEI: shares are
     ///         computed against the PRE-deposit valuation, then the pull happens, then routing.
-    /// @param assets   Amount of USDC to deposit.
+    /// @param assets   Amount of USDG to deposit.
     /// @param receiver Share recipient.
     /// @return shares  Shares minted.
     function deposit(uint256 assets, address receiver) external nonReentrant whenNotPaused returns (uint256 shares) {
         if (assets == 0) revert ZeroAmount();
         if (receiver == address(0)) revert ZeroAddress();
 
-        // Price against the valuation BEFORE this deposit's USDC arrives. Pulling AFTER computing shares is
+        // Price against the valuation BEFORE this deposit's USDG arrives. Pulling AFTER computing shares is
         // essential: if we read totalAssets() after the transfer it would already include `assets` and the
         // depositor would be under-credited.
         uint256 ts = totalShares;
@@ -207,7 +212,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
         balanceOf[receiver] += shares;
         emit Deposit(msg.sender, receiver, assets, shares);
 
-        // Interaction: pull the USDC in, then route idle funds to the source (if any).
+        // Interaction: pull the USDG in, then route idle funds to the source (if any).
         asset.safeTransferFrom(msg.sender, address(this), assets);
         _routeToSource(assets);
     }
@@ -277,7 +282,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
         balanceOf[msg.sender] = bal - shares;
         totalShares = ts - shares;
 
-        // Interaction: ensure `grossAssets` USDC is physically present in the vault, pulling from the source
+        // Interaction: ensure `grossAssets` USDG is physically present in the vault, pulling from the source
         // if idle isn't enough. `delivered` is what we could actually realize (<= grossAssets for a lossy /
         // illiquid source). We pay out exactly what we realized, so we can never transfer more than we hold.
         uint256 delivered = _ensureLiquidity(grossAssets);
@@ -331,7 +336,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     // Internal routing / liquidity helpers
     // ---------------------------------------------------------------------------------------------
 
-    /// @dev Push `assets` idle USDC to the source and notify it. No-op if no source. We push BEFORE calling
+    /// @dev Push `assets` idle USDG to the source and notify it. No-op if no source. We push BEFORE calling
     ///      `source.deposit` so the source never pulls from us (it accounts for funds already delivered).
     function _routeToSource(uint256 assets) internal {
         IYieldSource src = yieldSource;
@@ -340,7 +345,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
         src.deposit(assets);
     }
 
-    /// @dev Make at least `need` USDC physically present in the vault, pulling the shortfall from the source.
+    /// @dev Make at least `need` USDG physically present in the vault, pulling the shortfall from the source.
     ///      Returns the amount actually available afterward (<= need if the source couldn't honour in full).
     function _ensureLiquidity(uint256 need) internal returns (uint256 available) {
         uint256 idle = asset.balanceOf(address(this));
@@ -357,7 +362,7 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
         return nowIdle >= need ? need : nowIdle;
     }
 
-    /// @dev Idle USDC + what the source can pay out right now (used only for the `maxWithdraw` view).
+    /// @dev Idle USDG + what the source can pay out right now (used only for the `maxWithdraw` view).
     function _liquidCapacity() internal view returns (uint256) {
         uint256 idle = asset.balanceOf(address(this));
         IYieldSource src = yieldSource;
@@ -393,8 +398,8 @@ contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     // ---------------------------------------------------------------------------------------------
 
     /// @notice Set (or replace) the yield source. To preserve solvency we DRAIN the old source back into the
-    ///         vault first (so its assets are reflected as idle), then move all idle USDC into the new source.
-    ///         The owner cannot point the source at itself: USDC only ever flows vault↔source, never to the
+    ///         vault first (so its assets are reflected as idle), then move all idle USDG into the new source.
+    ///         The owner cannot point the source at itself: USDG only ever flows vault↔source, never to the
     ///         owner. Setting `newSource == address(0)` reverts to the safe 1:1 pass-through.
     /// @dev    SAFETY: switching the source can only change WHERE the funds are custodied, never WHO owns the
     ///         shares. If the old source was lossy and returns less than booked, that loss was already

@@ -8,9 +8,14 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-/// @title ObulusSubscriptionEscrow — recurring agent↔agent escrow (Tier 3) settled in USDC on Robinhood Chain
+/// @title ObulusSubscriptionEscrow — recurring agent↔agent escrow (Tier 3) settled in USDG on Robinhood Chain
 /// @author Obulus
-/// @custom:x https://x.com/obuluslayer
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 /// @notice Sibling of `ObulusEscrow` for *continuous* services: the subscriber prepays N periods, the
 ///         provider claims each period after a challenge window (optimistic release), the subscriber
 ///         can dispute a period (bridled arbiter) or revoke the subscription (refunding the

@@ -11,7 +11,7 @@ pragma solidity 0.8.28;
 ///         (src/types/PoolKey.sol, src/types/Currency.sol, src/types/PoolOperation.sol,
 ///         src/interfaces/IPoolManager.sol, src/interfaces/callback/IUnlockCallback.sol).
 ///
-/// LIVE-INFRA NOTE: the real v4 adapter requires a deployed `PoolManager`, an initialized + funded USDC pool,
+/// LIVE-INFRA NOTE: the real v4 adapter requires a deployed `PoolManager`, an initialized + funded USDG pool,
 /// and (for fee-claiming via a hook) a hook contract deployed at a CREATE2 address whose low bits encode the
 /// enabled hook flags. None of that exists in this sandbox, so the adapter's accounting/shape is exercised
 /// against `MockPoolManager` which simulates the unlock/modifyLiquidity/fee mechanics deterministically.

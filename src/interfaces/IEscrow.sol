@@ -19,7 +19,7 @@ interface IEscrow {
     /// @param seller          Service provider; must equal the recovered signer of the offer.
     /// @param buyer           Designated buyer, or address(0) for an open offer fundable by anyone.
     /// @param arbiter         Per-deal arbiter that may `resolve` a dispute (bridled: split only).
-    /// @param token           Settlement token; must equal the escrow's immutable USDC address.
+    /// @param token           Settlement token; must equal the escrow's immutable USDG address.
     /// @param price           Service price in token base units.
     /// @param buyerBond       Buyer anti-grief bond, posted at fund, returned on happy path.
     /// @param sellerBond      Seller anti-grief bond, posted at markDelivered, returned on happy path.

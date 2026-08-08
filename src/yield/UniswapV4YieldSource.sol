@@ -16,6 +16,12 @@ import {
 
 /// @title UniswapV4YieldSource — a GENUINE-shape Uniswap v4 LP adapter as a ObulusYieldVault yield source
 /// @author Obulus
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 ///
 /// ╔══════════════════════════════════════════════════════════════════════════════════════════════╗
 /// ║  ⛔ NOT PRODUCTION READY — TEST SKELETON ONLY. DO NOT DEPLOY AS A LIVE YIELDVAULT SOURCE. ⛔   ║
@@ -32,7 +38,7 @@ import {
 /// ║  It is intentionally wired into NO deploy script (see script/DeployVaults.s.sol).               ║
 /// ╚══════════════════════════════════════════════════════════════════════════════════════════════╝
 ///
-/// @notice Routes the vault's idle USDC into a Uniswap v4 position via the PoolManager's flash-accounting
+/// @notice Routes the vault's idle USDG into a Uniswap v4 position via the PoolManager's flash-accounting
 ///         (`unlock` → `unlockCallback` → `modifyLiquidity` → `settle`/`take`), and harvests trading fees
 ///         back as yield. Coded against the minimal in-repo v4 interfaces (`IPoolManagerMinimal`), which
 ///         mirror the real Uniswap v4-core ABI shapes, so this is the same shape that would run against a
@@ -40,14 +46,14 @@ import {
 ///         live-usable as-is.
 ///
 /// !!! RISK — NO FLOOR (read before deploying this as a vault source) !!!
-///  This is an AMM/LP source. USDC deposited here is exposed to impermanent loss, slippage, and pool
+///  This is an AMM/LP source. USDG deposited here is exposed to impermanent loss, slippage, and pool
 ///  insolvency. `totalAssets()` can return LESS than was deposited, and `withdraw()` can return less than
 ///  requested. A `ObulusYieldVault` backed by THIS source is NOT 1:1 redeemable and has NO principal floor —
 ///  depositors knowingly bear market risk. Do NOT pair this source with a "principal-safe" promise. (The
 ///  principal-protected configurations are: no source at all, or a principal-protected source.)
 ///
 /// LIVE-INFRA STATUS: a live deployment needs (1) a deployed v4 `PoolManager`, (2) an initialized + funded
-/// USDC pool keyed by `poolKey`, and (3) — if fees are claimed through a custom hook — a hook contract
+/// USDG pool keyed by `poolKey`, and (3) — if fees are claimed through a custom hook — a hook contract
 /// deployed at a CREATE2 address whose low bits encode the enabled hook flags. None of that exists in this
 /// sandbox, so the adapter's accounting/shape is covered locally against `MockPoolManager`. The adapter
 /// itself is admin-gated to the vault and never touches any escrow funds.
@@ -76,13 +82,13 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     int24 public immutable tickLower;
     int24 public immutable tickUpper;
 
-    /// @notice USDC the adapter has booked as deposited principal (best-effort; the live truth is the
+    /// @notice USDG the adapter has booked as deposited principal (best-effort; the live truth is the
     ///         position value reported via `modifyLiquidity`/`totalAssets`).
     uint256 public bookedPrincipal;
 
-    /// @notice Transient: USDC `withdraw` should pull back to the vault during a remove-liquidity unlock.
+    /// @notice Transient: USDG `withdraw` should pull back to the vault during a remove-liquidity unlock.
     uint256 private _pendingRemove;
-    /// @notice Transient: where withdrawn USDC goes (the vault).
+    /// @notice Transient: where withdrawn USDG goes (the vault).
     address private _withdrawTo;
 
     error OnlyVault();
@@ -116,7 +122,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
         tickLower = tickLower_;
         tickUpper = tickUpper_;
         // Pre-approve the manager so `settle` transfers are cheap; SafeERC20 forceApprove avoids the
-        // non-standard-approve pitfall (USDC tolerates standard approve, but be defensive).
+        // non-standard-approve pitfall (the settlement token tolerates standard approve, but be defensive).
         IERC20(usdc_).forceApprove(manager_, type(uint256).max);
     }
 
@@ -143,7 +149,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     // ---------------------------------------------------------------------------------------------
 
     /// @inheritdoc IYieldSource
-    /// @dev The vault has already transferred `assets` USDC to this adapter. We add that as liquidity inside
+    /// @dev The vault has already transferred `assets` USDG to this adapter. We add that as liquidity inside
     ///      a fresh v4 lock. Reentrancy-guarded; only the vault may call.
     function deposit(uint256 assets) external onlyVault nonReentrant {
         if (assets == 0) return;
@@ -153,7 +159,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
 
     /// @inheritdoc IYieldSource
     /// @dev Remove `assets` of liquidity (capped at what the position holds) plus accrued fees, sending the
-    ///      realized USDC to `to`. Returns what was ACTUALLY sent — may be < `assets` for a lossy/illiquid
+    ///      realized USDG to `to`. Returns what was ACTUALLY sent — may be < `assets` for a lossy/illiquid
     ///      position (the vault treats the return as ground truth).
     function withdraw(uint256 assets, address to) external onlyVault nonReentrant returns (uint256 sent) {
         if (assets == 0) return 0;
@@ -171,7 +177,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
 
     /// @inheritdoc IYieldSource
     /// @dev Best-effort valuation: the live position value. In this adapter we report bookedPrincipal + any
-    ///      USDC idly held here (e.g. fees already collected but not yet swept). A real integration would read
+    ///      USDG idly held here (e.g. fees already collected but not yet swept). A real integration would read
     ///      the position's principal+fees from the PoolManager's state libraries; against the mock the
     ///      position principal is `manager.liquidityOf(this)` and pending fees are `manager.feesOf(this)`,
     ///      surfaced via the view below so tests see honest gains AND losses.
@@ -181,7 +187,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
 
     /// @inheritdoc IYieldSource
     function maxWithdraw() external view returns (uint256) {
-        // Liquidity-bound by the position's recoverable value + any idle USDC here.
+        // Liquidity-bound by the position's recoverable value + any idle USDG here.
         return totalAssets();
     }
 
@@ -222,7 +228,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
             salt: bytes32(0)
         });
         manager.modifyLiquidity(poolKey, params, "");
-        // We owe `amount` USDC to the manager → sync + transfer + settle (v4 settlement pattern).
+        // We owe `amount` USDG to the manager → sync + transfer + settle (v4 settlement pattern).
         manager.sync(poolKey.currency0);
         usdc.safeTransfer(address(manager), amount);
         manager.settle();
@@ -236,7 +242,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
             salt: bytes32(0)
         });
         (BalanceDelta callerDelta,) = manager.modifyLiquidity(poolKey, params, "");
-        // The manager owes us `callerDelta.amount0` USDC (principal removed + fees). Take it to `to`.
+        // The manager owes us `callerDelta.amount0` USDG (principal removed + fees). Take it to `to`.
         int128 owed = callerDelta.amount0();
         if (owed > 0) {
             manager.take(poolKey.currency0, to, uint256(int256(owed)));

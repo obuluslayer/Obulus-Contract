@@ -20,9 +20,14 @@ interface IEscrowConfig {
     function resolveTimeout() external view returns (uint64);
 }
 
-/// @title ObulusStakingVault — standing USDC collateral for agents, slashable on adjudicated fault
+/// @title ObulusStakingVault — standing USDG collateral for agents, slashable on adjudicated fault
 /// @author Obulus
-/// @custom:x https://x.com/obuluslayer
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 /// @notice A NEW, standalone auxiliary contract. It lets an agent post standing collateral that a
 ///         counterparty (or the protocol) can rely on beyond the per-deal bonds held by `ObulusEscrow`.
 ///         The vault READS `ObulusEscrow` to authorise a slash, but NEVER calls or mutates it.
@@ -55,7 +60,7 @@ interface IEscrowConfig {
 ///  we can no longer tell fault apart anyway, so a post-hoc slash would be unverifiable.
 ///
 /// Design invariants (mirroring ObulusEscrow.sol):
-///  - CONSERVATION: vault USDC balance == Σ stakeOf(all) + Σ pending withdrawals. Slashed funds leave the
+///  - CONSERVATION: vault USDG balance == Σ stakeOf(all) + Σ pending withdrawals. Slashed funds leave the
 ///    vault to the treasury and are removed from `stakeOf` and/or `pendingOf` in the same step (a slash may
 ///    reach into the pending bucket to defeat unstake-evasion), so the identity always holds.
 ///  - The owner has NO power to move stake: admin is limited to `withdrawalDelay`, `treasury`, `slashCap`.
@@ -73,7 +78,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
     /// @notice Hard ceiling on the configurable withdrawal delay (bounds timer math; 90 days is ample).
     uint64 public constant MAX_WITHDRAWAL_DELAY = 90 days;
 
-    /// @notice The collateral token (USDC on Robinhood Chain) — must equal the ObulusEscrow's settlement token.
+    /// @notice The collateral token (USDG on Robinhood Chain mainnet) — must equal the ObulusEscrow's settlement token.
     IERC20 public immutable usdc;
     /// @notice The ObulusEscrow this vault reads to authorise slashes. Read-only; never called to mutate.
     IEscrow public immutable escrow;
@@ -141,7 +146,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
     event Withdrawn(address indexed account, uint256 amount);
     /// @param dealId   The ObulusEscrow deal whose arbiter authorised the slash.
     /// @param account  The at-fault party whose stake was reduced.
-    /// @param amount   USDC moved to the treasury.
+    /// @param amount   USDG moved to the treasury.
     event Slashed(bytes32 indexed dealId, address indexed account, address indexed arbiter, uint256 amount);
     event WithdrawalDelayUpdated(uint64 withdrawalDelay);
     event TreasuryUpdated(address indexed treasury);
@@ -212,7 +217,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
     // stake / unstake / withdraw
     // ---------------------------------------------------------------------------------------------
 
-    /// @notice Deposit `amount` USDC as standing collateral.
+    /// @notice Deposit `amount` USDG as standing collateral.
     function stake(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
         // Effects (CEI): credit before pulling so a reentrant token cannot double-count.
@@ -377,7 +382,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
         return (p.amount, p.unlockAt);
     }
 
-    /// @notice Total value the vault must hold to honour all obligations. Equals the USDC balance.
+    /// @notice Total value the vault must hold to honour all obligations. Equals the USDG balance.
     function totalObligations() external view returns (uint256) {
         return totalStaked + totalPending;
     }
