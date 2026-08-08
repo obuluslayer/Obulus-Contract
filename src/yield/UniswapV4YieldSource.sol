@@ -72,7 +72,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     ///         StateLibrary-backed implementation must flip it. See also `isLive()`.
     bool public constant IS_PRODUCTION_READY = false;
 
-    IERC20 public immutable usdc;
+    IERC20 public immutable usdg;
     IPoolManagerMinimal public immutable manager;
     /// @notice The vault that owns this source. Only it may deposit/withdraw.
     address public immutable vault;
@@ -104,7 +104,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     ///        forces every caller to make a deliberate, in-code acknowledgement that this adapter is a
     ///        mock-only test skeleton whose valuation does NOT work against a real Uniswap v4 PoolManager.
     constructor(
-        address usdc_,
+        address usdg_,
         address manager_,
         address vault_,
         PoolKey memory key_,
@@ -114,8 +114,8 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     ) {
         // HARD GUARD: cannot be deployed without explicitly acknowledging it is NOT production-ready.
         if (!acknowledgeTestSkeleton) revert NotProductionReady();
-        if (Currency.unwrap(key_.currency0) != usdc_) revert AssetMismatch();
-        usdc = IERC20(usdc_);
+        if (Currency.unwrap(key_.currency0) != usdg_) revert AssetMismatch();
+        usdg = IERC20(usdg_);
         manager = IPoolManagerMinimal(manager_);
         vault = vault_;
         poolKey = key_;
@@ -123,7 +123,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
         tickUpper = tickUpper_;
         // Pre-approve the manager so `settle` transfers are cheap; SafeERC20 forceApprove avoids the
         // non-standard-approve pitfall (the settlement token tolerates standard approve, but be defensive).
-        IERC20(usdc_).forceApprove(manager_, type(uint256).max);
+        IERC20(usdg_).forceApprove(manager_, type(uint256).max);
     }
 
     modifier onlyVault() {
@@ -133,7 +133,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
 
     /// @inheritdoc IYieldSource
     function asset() external view returns (address) {
-        return address(usdc);
+        return address(usdg);
     }
 
     /// @notice HARD GUARD: always `false` for this skeleton. Integrators / deploy tooling MUST check this (or
@@ -163,14 +163,14 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     ///      position (the vault treats the return as ground truth).
     function withdraw(uint256 assets, address to) external onlyVault nonReentrant returns (uint256 sent) {
         if (assets == 0) return 0;
-        uint256 balBefore = usdc.balanceOf(to);
+        uint256 balBefore = usdg.balanceOf(to);
         _withdrawTo = to;
         _pendingRemove = assets;
         manager.unlock(abi.encode(Action.RemoveLiquidity, assets, to));
         _pendingRemove = 0;
         _withdrawTo = address(0);
         // Ground truth: what `to` actually received this call.
-        sent = usdc.balanceOf(to) - balBefore;
+        sent = usdg.balanceOf(to) - balBefore;
         // Reduce booked principal by what left (floor at 0).
         bookedPrincipal = sent < bookedPrincipal ? bookedPrincipal - sent : 0;
     }
@@ -182,7 +182,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     ///      position principal is `manager.liquidityOf(this)` and pending fees are `manager.feesOf(this)`,
     ///      surfaced via the view below so tests see honest gains AND losses.
     function totalAssets() public view returns (uint256) {
-        return _positionValue() + usdc.balanceOf(address(this));
+        return _positionValue() + usdg.balanceOf(address(this));
     }
 
     /// @inheritdoc IYieldSource
@@ -195,11 +195,11 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
     /// @dev Harvest = remove zero principal but collect accrued fees into this contract as realized yield.
     ///      Permissionless and idempotent. Collected fees raise `totalAssets()` (and thus vault share price).
     function harvest() external nonReentrant returns (uint256 realized) {
-        uint256 before = usdc.balanceOf(address(this));
+        uint256 before = usdg.balanceOf(address(this));
         // Remove 0 principal → the mock still pays out accrued fees; on a real pool you'd collect fees via a
         // zero-delta modifyLiquidity. Guard: only attempt if there is something to collect.
         manager.unlock(abi.encode(Action.RemoveLiquidity, uint256(0), address(this)));
-        realized = usdc.balanceOf(address(this)) - before;
+        realized = usdg.balanceOf(address(this)) - before;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -230,7 +230,7 @@ contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard 
         manager.modifyLiquidity(poolKey, params, "");
         // We owe `amount` USDG to the manager → sync + transfer + settle (v4 settlement pattern).
         manager.sync(poolKey.currency0);
-        usdc.safeTransfer(address(manager), amount);
+        usdg.safeTransfer(address(manager), amount);
         manager.settle();
     }
 

@@ -11,7 +11,7 @@ import {ObulusYieldVault} from "../src/ObulusYieldVault.sol";
 ///         ALREADY-DEPLOYED ObulusEscrow (from an `ESCROW` env override, or from `deployments/<chainId>.json` written
 ///         by `Deploy.s.sol`) and conditionally deploys the two standalone auxiliary contracts, then EXTENDS
 ///         the same `deployments/<chainId>.json` with their addresses — additively, preserving every existing
-///         key (`escrow`, `usdc`, `chainId`, `deployBlock`) so all current readers keep working.
+///         key (`escrow`, `usdg`, `chainId`, `deployBlock`) so all current readers keep working.
 ///
 /// EVERYTHING HERE DEFAULTS OFF: with no env set, this script deploys NOTHING (both gates false) and writes
 /// nothing. You opt in per-contract with `DEPLOY_STAKING=true` / `DEPLOY_YIELD=true`.
@@ -67,7 +67,7 @@ contract DeployVaults is Script {
         (stakingVault, yieldVault) = _deployFrom(cfg);
         vm.stopBroadcast();
 
-        _extendDeployment(cfg.escrow, IEscrowConfig(cfg.escrow).usdc(), stakingVault, yieldVault);
+        _extendDeployment(cfg.escrow, IEscrowConfig(cfg.escrow).usdg(), stakingVault, yieldVault);
 
         console2.log("chainId        :", block.chainid);
         console2.log("ObulusEscrow         :", cfg.escrow);
@@ -78,14 +78,14 @@ contract DeployVaults is Script {
     ///         staking-delay assert, then EXTENDS deployments/<chainId>.json. Does NOT manage broadcasting.
     function deploy(VaultConfig memory cfg) external returns (address stakingVault, address yieldVault) {
         (stakingVault, yieldVault) = _deployFrom(cfg);
-        _extendDeployment(cfg.escrow, IEscrowConfig(cfg.escrow).usdc(), stakingVault, yieldVault);
+        _extendDeployment(cfg.escrow, IEscrowConfig(cfg.escrow).usdg(), stakingVault, yieldVault);
     }
 
     /// @dev The actual gated contract creations + the fail-fast assert. No env, no broadcast, no file I/O.
     function _deployFrom(VaultConfig memory cfg) internal returns (address stakingVault, address yieldVault) {
         // Read USDC straight from the ObulusEscrow so the vaults always settle in the SAME token as the deals they
         // back — never a stale or mismatched env value. (ObulusStakingVault re-asserts this in its constructor.)
-        address usdc = IEscrowConfig(cfg.escrow).usdc();
+        address usdg = IEscrowConfig(cfg.escrow).usdg();
 
         // --- ObulusStakingVault (opt-in) ---------------------------------------------------------------
         if (cfg.deployStaking) {
@@ -100,7 +100,7 @@ contract DeployVaults is Script {
             );
 
             ObulusStakingVault sv =
-                new ObulusStakingVault(usdc, cfg.escrow, cfg.treasury, cfg.stakingWithdrawalDelay, cfg.stakingSlashCapBps);
+                new ObulusStakingVault(usdg, cfg.escrow, cfg.treasury, cfg.stakingWithdrawalDelay, cfg.stakingSlashCapBps);
             stakingVault = address(sv);
             console2.log("ObulusStakingVault   :", stakingVault);
             console2.log("  withdrawDelay:", cfg.stakingWithdrawalDelay);
@@ -109,7 +109,7 @@ contract DeployVaults is Script {
 
         // --- ObulusYieldVault (opt-in) — NO source, safe 1:1 pass-through ------------------------------
         if (cfg.deployYield) {
-            ObulusYieldVault yv = new ObulusYieldVault(usdc, cfg.treasury);
+            ObulusYieldVault yv = new ObulusYieldVault(usdg, cfg.treasury);
             yieldVault = address(yv);
             console2.log("ObulusYieldVault     :", yieldVault);
             console2.log("  yieldSource  : (none - safe 1:1 pass-through)");
@@ -129,9 +129,9 @@ contract DeployVaults is Script {
 
     /// @dev ADDITIVELY extend deployments/<chainId>.json with the vault addresses. If the file exists we set
     ///      ONLY the new keys via the targeted `writeJson(value, path, key)` form, preserving every existing
-    ///      field so current readers (escrow/usdc/chainId/deployBlock) are untouched. If it does not exist
+    ///      field so current readers (escrow/usdg/chainId/deployBlock) are untouched. If it does not exist
     ///      (ESCROW was supplied by env), we create it with the full field set.
-    function _extendDeployment(address escrow, address usdc, address stakingVault, address yieldVault) internal {
+    function _extendDeployment(address escrow, address usdg, address stakingVault, address yieldVault) internal {
         string memory path = _deploymentPath();
 
         if (vm.exists(path)) {
@@ -148,7 +148,7 @@ contract DeployVaults is Script {
             // Each serialize call returns the running JSON; we keep the latest so the file always carries the
             // full field set whether or not the optional vault keys are present (no placeholder/marker key).
             vm.serializeAddress(obj, "escrow", escrow);
-            vm.serializeAddress(obj, "usdc", usdc);
+            vm.serializeAddress(obj, "usdg", usdg);
             vm.serializeUint(obj, "chainId", block.chainid);
             string memory json = vm.serializeUint(obj, "deployBlock", block.number);
             if (stakingVault != address(0)) json = vm.serializeAddress(obj, "stakingVault", stakingVault);

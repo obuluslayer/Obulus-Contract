@@ -9,9 +9,9 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 
 /// @notice Minimal local extension of `IEscrow` exposing the two settlement-config getters the vault must
 ///         read at deploy/admin time. The shared `IEscrow` interface (an off-chain integration contract)
-///         declares neither `usdc()` nor `resolveTimeout()`, but the concrete `ObulusEscrow` exposes both as
+///         declares neither `usdg()` nor `resolveTimeout()`, but the concrete `ObulusEscrow` exposes both as
 ///         public immutables. We declare them here — WITHOUT editing `IEscrow.sol` — so the vault can
-///         (a) assert it settles in the same token as the escrow (`usdc_ == escrow.usdc()`), making the
+///         (a) assert it settles in the same token as the escrow (`usdg_ == escrow.usdg()`), making the
 ///         otherwise-dead `TokenMismatch` error live, and (b) ENFORCE on-chain that the unstake→withdraw
 ///         delay strictly exceeds the escrow's dispute-resolution window (`escrow.resolveTimeout()`), so
 ///         funds unstaked during a live dispute are still physically present when the arbiter slashes.
@@ -22,7 +22,7 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 /// @custom:x              https://x.com/obuluslayer
 /// @custom:telegram       https://t.me/obuluslayer
 interface IEscrowConfig {
-    function usdc() external view returns (address);
+    function usdg() external view returns (address);
     function resolveTimeout() external view returns (uint64);
 }
 
@@ -79,7 +79,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
     uint64 public constant MAX_WITHDRAWAL_DELAY = 90 days;
 
     /// @notice The collateral token (USDG on Robinhood Chain mainnet) — must equal the ObulusEscrow's settlement token.
-    IERC20 public immutable usdc;
+    IERC20 public immutable usdg;
     /// @notice The ObulusEscrow this vault reads to authorise slashes. Read-only; never called to mutate.
     IEscrow public immutable escrow;
 
@@ -177,33 +177,33 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
     // Constructor
     // ---------------------------------------------------------------------------------------------
 
-    /// @param usdc_            Collateral token; must equal `escrow_.usdc()` for a coherent system.
+    /// @param usdg_            Collateral token; must equal `escrow_.usdg()` for a coherent system.
     /// @param escrow_          The ObulusEscrow read (never mutated) to authorise slashes.
     /// @param treasury_        Slash beneficiary.
     /// @param withdrawalDelay_ Initial unstake→withdraw delay; MUST be STRICTLY > `escrow_.resolveTimeout()`
     ///                         (enforced — reverts `WithdrawalDelayTooShort` otherwise) and <= MAX_WITHDRAWAL_DELAY.
     /// @param slashCapBps_     Initial slash ceiling in bps of stake; <= MAX_SLASH_CAP_BPS.
     constructor(
-        address usdc_,
+        address usdg_,
         address escrow_,
         address treasury_,
         uint64 withdrawalDelay_,
         uint16 slashCapBps_
     ) Ownable(msg.sender) {
-        if (usdc_ == address(0) || escrow_ == address(0) || treasury_ == address(0)) revert ZeroAddress();
+        if (usdg_ == address(0) || escrow_ == address(0) || treasury_ == address(0)) revert ZeroAddress();
         if (slashCapBps_ > MAX_SLASH_CAP_BPS) revert SlashCapTooHigh();
         if (withdrawalDelay_ > MAX_WITHDRAWAL_DELAY) revert WithdrawalDelayTooHigh();
         // Token coherence: the vault and the escrow it reads MUST settle in the same token, otherwise the
         // collateral posted here is denominated differently from the deals it backs. Enforced (not just
-        // documented) via the local `IEscrowConfig.usdc()` extension so `TokenMismatch` is a live guard.
-        if (usdc_ != IEscrowConfig(escrow_).usdc()) revert TokenMismatch();
+        // documented) via the local `IEscrowConfig.usdg()` extension so `TokenMismatch` is a live guard.
+        if (usdg_ != IEscrowConfig(escrow_).usdg()) revert TokenMismatch();
         // Anti-evasion floor (ENFORCED, not just documented): the unstake→withdraw delay must STRICTLY
         // exceed the escrow's dispute window, so funds unstaked during a live dispute remain physically
         // present (slashable in the pending bucket) until at least one block AFTER the dispute could
         // expire. A misconfigured `withdrawalDelay <= resolveTimeout` is rejected at deploy time, making
         // the reproduced "1d delay vs 7d timeout" full-evasion deployment impossible.
         if (withdrawalDelay_ <= IEscrowConfig(escrow_).resolveTimeout()) revert WithdrawalDelayTooShort();
-        usdc = IERC20(usdc_);
+        usdg = IERC20(usdg_);
         escrow = IEscrow(escrow_);
         treasury = treasury_;
         withdrawalDelay = withdrawalDelay_;
@@ -225,7 +225,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
         totalStaked += amount;
         emit Staked(msg.sender, amount, stakeOf[msg.sender]);
         // Interaction.
-        usdc.safeTransferFrom(msg.sender, address(this), amount);
+        usdg.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     /// @notice Begin withdrawing `amount` from stake. Funds become claimable via `withdraw` only after
@@ -264,7 +264,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
         emit Withdrawn(msg.sender, p.amount);
 
         // Interaction.
-        usdc.safeTransfer(msg.sender, p.amount);
+        usdg.safeTransfer(msg.sender, p.amount);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -344,7 +344,7 @@ contract ObulusStakingVault is Ownable2Step, ReentrancyGuard {
         emit Slashed(dealId, account, msg.sender, toSlash);
 
         // Interaction: slashed funds leave to the treasury (NOT the caller → no profit/griefing motive).
-        usdc.safeTransfer(treasury, toSlash);
+        usdg.safeTransfer(treasury, toSlash);
     }
 
     // ---------------------------------------------------------------------------------------------

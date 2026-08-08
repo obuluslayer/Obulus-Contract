@@ -16,8 +16,8 @@ contract LossyIlliquidSource is IYieldSource {
     uint256 public booked;
     uint256 public payableCap = type(uint256).max;
 
-    constructor(address usdc_, address vault_) {
-        usdc = MockUSDC(usdc_);
+    constructor(address usdg_, address vault_) {
+        usdc = MockUSDC(usdg_);
         vault = vault_;
     }
 

@@ -17,7 +17,7 @@ import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 ///   ARB_FEE_BPS      arbitration fee as a fraction of the slashed bond, default 2000 (20%)
 ///   RESOLVE_TIMEOUT  absent-arbiter fallback grace period in seconds, default 7 days
 contract Deploy is Script {
-    function run() external returns (ObulusEscrow escrow, address usdc) {
+    function run() external returns (ObulusEscrow escrow, address usdg) {
         uint256 pk = vm.envOr("PRIVATE_KEY", uint256(0));
         address treasury = vm.envOr("TREASURY_ADDRESS", address(0));
         uint16 feeBps = uint16(vm.envOr("FEE_BPS", uint256(100)));
@@ -34,15 +34,15 @@ contract Deploy is Script {
         }
         if (treasury == address(0)) treasury = deployer;
 
-        usdc = _resolveUsdc();
-        escrow = new ObulusEscrow(usdc, treasury, feeBps, arbFeeBps, resolveTimeout);
+        usdg = _resolveUsdc();
+        escrow = new ObulusEscrow(usdg, treasury, feeBps, arbFeeBps, resolveTimeout);
 
         vm.stopBroadcast();
 
-        _writeDeployment(address(escrow), usdc);
+        _writeDeployment(address(escrow), usdg);
         console2.log("chainId        :", block.chainid);
         console2.log("ObulusEscrow         :", address(escrow));
-        console2.log("USDC           :", usdc);
+        console2.log("USDC           :", usdg);
         console2.log("treasury       :", treasury);
         console2.log("feeBps         :", feeBps);
         console2.log("deployBlock    :", block.number);
@@ -50,7 +50,7 @@ contract Deploy is Script {
 
     function _resolveUsdc() internal returns (address) {
         // No canonical Circle USDC is published for Robinhood Chain yet (check
-        // https://developers.circle.com/stablecoins/usdc-on-main-networks before mainnet), so USDC
+        // https://developers.circle.com/stablecoins/usdg-on-main-networks before mainnet), so USDC
         // comes from env; USE_MOCK_USDC=true / the local fallback deploy a freely-mintable MockUSDC
         // (testnet liquidity for the arena bots, local dev).
         if (vm.envOr("USE_MOCK_USDC", false)) return address(new MockUSDC());
@@ -61,12 +61,12 @@ contract Deploy is Script {
         return address(new MockUSDC());
     }
 
-    function _writeDeployment(address escrow, address usdc) internal {
+    function _writeDeployment(address escrow, address usdg) internal {
         // mkdir -p: a fresh clone has no deployments/ and vm.writeJson refuses to create parents.
         if (!vm.exists("deployments")) vm.createDir("deployments", true);
         string memory obj = "deployment";
         vm.serializeAddress(obj, "escrow", escrow);
-        vm.serializeAddress(obj, "usdc", usdc);
+        vm.serializeAddress(obj, "usdg", usdg);
         vm.serializeUint(obj, "chainId", block.chainid);
         string memory json = vm.serializeUint(obj, "deployBlock", block.number);
         vm.writeJson(json, string.concat("deployments/", vm.toString(block.chainid), ".json"));

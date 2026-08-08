@@ -45,7 +45,7 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 ///    subscriber/seller (+ capped protocol fee + capped arbitration fee from a bounded bond slash).
 ///  - All payouts are pull-based (`credits` + `withdraw`).
 ///  - Bond slashing is bounded per period (`bond/numPeriods`) and by the remaining bond.
-///  - Conservation: usdc.balanceOf(this) ==
+///  - Conservation: usdg.balanceOf(this) ==
 ///        Σ_subs (escrowedPrice + sellerBondRem + subscriberBondRem) + Σ credits[].
 ///    At all times escrowedPrice == (numPeriods - settledCount) * periodPrice.
 /// @custom:landing        https://obuluslayer.xyz/
@@ -65,7 +65,7 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
         "SubOffer(address seller,address subscriber,address arbiter,address token,uint256 periodPrice,uint256 sellerBond,uint256 subscriberBond,uint32 numPeriods,uint64 periodLength,uint64 challengeWindow,uint64 startAt,uint16 feeBps,bytes32 specHash,uint256 nonce,uint64 sigDeadline)"
     );
 
-    IERC20 public immutable usdc;
+    IERC20 public immutable usdg;
     uint16 public immutable arbFeeBps;
     uint64 public immutable resolveTimeout;
 
@@ -82,7 +82,7 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
         address seller;
         address subscriber; // address(0) → open: the funder becomes the subscriber
         address arbiter;
-        address token; // must equal usdc
+        address token; // must equal usdg
         uint256 periodPrice;
         uint256 sellerBond; // provider stake, posted at activate
         uint256 subscriberBond; // anti-abuse, posted at start
@@ -200,15 +200,15 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
     // Constructor
     // ---------------------------------------------------------------------------------------------
 
-    constructor(address usdc_, address treasury_, uint16 feeBps_, uint16 arbFeeBps_, uint64 resolveTimeout_)
+    constructor(address usdg_, address treasury_, uint16 feeBps_, uint16 arbFeeBps_, uint64 resolveTimeout_)
         EIP712("ObulusSubscription", "1")
         Ownable(msg.sender)
     {
-        if (usdc_ == address(0) || treasury_ == address(0)) revert ZeroAddress();
+        if (usdg_ == address(0) || treasury_ == address(0)) revert ZeroAddress();
         if (feeBps_ > MAX_FEE_BPS) revert FeeTooHigh();
         if (arbFeeBps_ > MAX_ARB_FEE_BPS) revert ArbFeeTooHigh();
         if (resolveTimeout_ == 0) revert InvalidParams();
-        usdc = IERC20(usdc_);
+        usdg = IERC20(usdg_);
         treasury = treasury_;
         feeBps = feeBps_;
         arbFeeBps = arbFeeBps_;
@@ -222,7 +222,7 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------------
 
     function start(SubOffer calldata offer, bytes calldata sellerSig) external nonReentrant returns (bytes32 subId) {
-        if (offer.token != address(usdc)) revert TokenMismatch();
+        if (offer.token != address(usdg)) revert TokenMismatch();
         if (offer.seller == address(0) || offer.arbiter == address(0)) revert ZeroAddress();
         if (block.timestamp > offer.sigDeadline) revert OfferExpired();
         if (offer.numPeriods == 0 || offer.periodLength == 0 || offer.periodPrice == 0) revert InvalidParams();
@@ -275,7 +275,7 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
             offer.specHash
         );
 
-        usdc.safeTransferFrom(msg.sender, address(this), totalPrice + offer.subscriberBond);
+        usdg.safeTransferFrom(msg.sender, address(this), totalPrice + offer.subscriberBond);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -293,7 +293,7 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
         s.sellerBondRem = s.sellerBond;
         emit SubActivated(subId, s.seller, s.sellerBond);
 
-        if (s.sellerBond != 0) usdc.safeTransferFrom(msg.sender, address(this), s.sellerBond);
+        if (s.sellerBond != 0) usdg.safeTransferFrom(msg.sender, address(this), s.sellerBond);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -348,7 +348,7 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
         s.depositHeld += s.periodPrice; // anti-grief deposit: refunded if upheld, forfeited if frivolous
         emit PeriodDisputed(subId, s.subscriber, p, uint64(block.timestamp) + resolveTimeout);
 
-        usdc.safeTransferFrom(msg.sender, address(this), s.periodPrice);
+        usdg.safeTransferFrom(msg.sender, address(this), s.periodPrice);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -495,7 +495,7 @@ contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
         if (amount == 0) revert NothingToWithdraw();
         credits[msg.sender] = 0;
         emit Withdrawn(msg.sender, amount);
-        usdc.safeTransfer(msg.sender, amount);
+        usdg.safeTransfer(msg.sender, amount);
     }
 
     // ---------------------------------------------------------------------------------------------

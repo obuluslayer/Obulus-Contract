@@ -45,7 +45,7 @@ contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
     );
 
     /// @notice The settlement token — USDG on Robinhood Chain mainnet, MockUSDC on testnet.
-    IERC20 public immutable usdc;
+    IERC20 public immutable usdg;
     /// @notice Arbitration fee as a fraction (bps) of the losing party's slashed bond.
     uint16 public immutable arbFeeBps;
     /// @notice Grace period after a dispute before anyone may trigger the absent-arbiter fallback.
@@ -71,16 +71,16 @@ contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
     // Constructor
     // ---------------------------------------------------------------------------------------------
 
-    constructor(address usdc_, address treasury_, uint16 feeBps_, uint16 arbFeeBps_, uint64 resolveTimeout_)
+    constructor(address usdg_, address treasury_, uint16 feeBps_, uint16 arbFeeBps_, uint64 resolveTimeout_)
         EIP712("Obulus", "1")
         Ownable(msg.sender)
     {
-        if (usdc_ == address(0) || treasury_ == address(0)) revert ZeroAddress();
+        if (usdg_ == address(0) || treasury_ == address(0)) revert ZeroAddress();
         if (feeBps_ > MAX_FEE_BPS) revert FeeTooHigh();
         if (arbFeeBps_ > MAX_ARB_FEE_BPS) revert ArbFeeTooHigh();
         if (resolveTimeout_ == 0) revert InvalidDeadline();
         if (resolveTimeout_ > 365 days) revert InvalidDeadline(); // bound so disputedAt + resolveTimeout (uint64) can't overflow
-        usdc = IERC20(usdc_);
+        usdg = IERC20(usdg_);
         treasury = treasury_;
         feeBps = feeBps_;
         arbFeeBps = arbFeeBps_;
@@ -95,7 +95,7 @@ contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
 
     /// @inheritdoc IEscrow
     function fund(Offer calldata offer, bytes calldata sellerSig) external nonReentrant returns (bytes32 dealId) {
-        if (offer.token != address(usdc)) revert TokenMismatch();
+        if (offer.token != address(usdg)) revert TokenMismatch();
         if (offer.seller == address(0) || offer.arbiter == address(0)) revert ZeroAddress();
         if (block.timestamp > offer.sigDeadline) revert OfferExpired();
         if (offer.deliverDeadline <= block.timestamp) revert InvalidDeadline();
@@ -147,7 +147,7 @@ contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
         );
 
         // Interaction: pull the buyer's price + bond.
-        usdc.safeTransferFrom(msg.sender, address(this), offer.price + offer.buyerBond);
+        usdg.safeTransferFrom(msg.sender, address(this), offer.price + offer.buyerBond);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
 
         // Interaction: pull the seller's bond now (no bond is locked while a no-show seller stalls).
         uint256 bond = d.sellerBond;
-        if (bond != 0) usdc.safeTransferFrom(msg.sender, address(this), bond);
+        if (bond != 0) usdg.safeTransferFrom(msg.sender, address(this), bond);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -303,7 +303,7 @@ contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
         if (amount == 0) revert NothingToWithdraw();
         credits[msg.sender] = 0;
         emit Withdrawn(msg.sender, amount);
-        usdc.safeTransfer(msg.sender, amount);
+        usdg.safeTransfer(msg.sender, amount);
     }
 
     // ---------------------------------------------------------------------------------------------

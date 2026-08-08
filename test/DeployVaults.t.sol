@@ -59,7 +59,7 @@ contract DeployVaultsTest is Test {
         if (!vm.exists("deployments")) vm.createDir("deployments", true);
         string memory obj = "base";
         vm.serializeAddress(obj, "escrow", address(escrow));
-        vm.serializeAddress(obj, "usdc", address(usdc));
+        vm.serializeAddress(obj, "usdg", address(usdc));
         vm.serializeUint(obj, "chainId", block.chainid);
         string memory json = vm.serializeUint(obj, "deployBlock", 12345);
         vm.writeJson(json, path);
@@ -84,7 +84,7 @@ contract DeployVaultsTest is Test {
         // Existing keys untouched; no vault keys added.
         string memory json = vm.readFile(path);
         assertEq(vm.parseJsonAddress(json, ".escrow"), address(escrow), "escrow preserved");
-        assertEq(vm.parseJsonAddress(json, ".usdc"), address(usdc), "usdc preserved");
+        assertEq(vm.parseJsonAddress(json, ".usdg"), address(usdc), "settlement token preserved");
         assertFalse(vm.keyExistsJson(json, ".stakingVault"), "no stakingVault key when gate off");
         assertFalse(vm.keyExistsJson(json, ".yieldVault"), "no yieldVault key when gate off");
         _clear();
@@ -111,7 +111,7 @@ contract DeployVaultsTest is Test {
         string memory json = vm.readFile(path);
         assertEq(vm.parseJsonAddress(json, ".yieldVault"), yv, "yieldVault serialized");
         assertEq(vm.parseJsonAddress(json, ".escrow"), address(escrow), "escrow preserved");
-        assertEq(vm.parseJsonAddress(json, ".usdc"), address(usdc), "usdc preserved");
+        assertEq(vm.parseJsonAddress(json, ".usdg"), address(usdc), "settlement token preserved");
         assertEq(vm.parseJsonUint(json, ".deployBlock"), 12345, "deployBlock preserved");
         assertFalse(vm.keyExistsJson(json, ".stakingVault"), "no stakingVault key (gate off)");
         _clear();
@@ -141,7 +141,7 @@ contract DeployVaultsTest is Test {
         assertEq(yv, address(0), "yield gate off");
 
         ObulusStakingVault deployed = ObulusStakingVault(sv);
-        assertEq(address(deployed.usdc()), address(usdc), "staking vault uses escrow's USDC");
+        assertEq(address(deployed.usdg()), address(usdc), "staking vault uses the escrow settlement token");
         assertEq(address(deployed.escrow()), address(escrow), "wired to the escrow");
         assertEq(deployed.treasury(), treasury, "treasury wired");
         assertEq(deployed.withdrawalDelay(), RESOLVE_TIMEOUT + 1 days, "withdrawalDelay set");
@@ -171,7 +171,7 @@ contract DeployVaultsTest is Test {
         assertEq(vm.parseJsonAddress(json, ".yieldVault"), yv, "yieldVault key");
         // Existing keys all preserved.
         assertEq(vm.parseJsonAddress(json, ".escrow"), address(escrow), "escrow preserved");
-        assertEq(vm.parseJsonAddress(json, ".usdc"), address(usdc), "usdc preserved");
+        assertEq(vm.parseJsonAddress(json, ".usdg"), address(usdc), "settlement token preserved");
         assertEq(vm.parseJsonUint(json, ".chainId"), block.chainid, "chainId preserved");
         assertEq(vm.parseJsonUint(json, ".deployBlock"), 12345, "deployBlock preserved");
         _clear();
@@ -190,7 +190,7 @@ contract DeployVaultsTest is Test {
 
         string memory json = vm.readFile(path);
         assertEq(vm.parseJsonAddress(json, ".escrow"), address(escrow), "escrow written");
-        assertEq(vm.parseJsonAddress(json, ".usdc"), address(usdc), "usdc written from escrow.usdc()");
+        assertEq(vm.parseJsonAddress(json, ".usdg"), address(usdc), "usdc written from escrow.usdg()");
         assertEq(vm.parseJsonAddress(json, ".yieldVault"), yv, "yieldVault written");
         assertEq(vm.parseJsonUint(json, ".chainId"), block.chainid, "chainId written");
         _clear();

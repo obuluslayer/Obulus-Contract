@@ -541,8 +541,8 @@ contract LossyStub is IYieldSource {
     address internal immutable vault;
     uint256 public booked;
 
-    constructor(address usdc_, address vault_) {
-        usdc = MockUSDC(usdc_);
+    constructor(address usdg_, address vault_) {
+        usdc = MockUSDC(usdg_);
         vault = vault_;
     }
 
@@ -596,8 +596,8 @@ contract IlliquidStub is IYieldSource {
     uint256 public booked; // on-paper value (what totalAssets reports)
     uint256 public payableCap = type(uint256).max; // max USDC payable per withdraw (illiquidity bound)
 
-    constructor(address usdc_, address vault_) {
-        usdc = MockUSDC(usdc_);
+    constructor(address usdg_, address vault_) {
+        usdc = MockUSDC(usdg_);
         vault = vault_;
     }
 
