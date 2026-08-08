@@ -5,6 +5,12 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @notice A malicious 6-decimal ERC20 that attempts to re-enter a target contract on every transfer.
 ///         Used to prove the escrow's `nonReentrant` guard + checks-effects-interactions hold.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract ReentrantToken is ERC20 {
     address public target;
     bytes public attackCalldata;

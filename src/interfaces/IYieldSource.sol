@@ -34,6 +34,12 @@ pragma solidity 0.8.28;
 ///    extent the underlying is — i.e. it may go DOWN for a lossy source.
 ///  - `maxWithdraw()` is the amount the source can honour RIGHT NOW (liquidity-limited). The vault uses it to
 ///    avoid requesting more than the source can pay in one call.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 interface IYieldSource {
     /// @notice The underlying token this source manages. MUST equal the vault's `asset()` (USDG).
     function asset() external view returns (address);

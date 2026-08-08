@@ -10,12 +10,6 @@ import {IYieldSource} from "./interfaces/IYieldSource.sol";
 
 /// @title ObulusYieldVault — OPT-IN, share-accounted surplus vault for agents & the protocol treasury
 /// @author Obulus
-/// @custom:landing        https://obuluslayer.xyz/
-/// @custom:dapp           https://app.obuluslayer.xyz/
-/// @custom:documentation  https://gitbook.obuluslayer.xyz/
-/// @custom:github         https://github.com/obuluslayer
-/// @custom:x              https://x.com/obuluslayer
-/// @custom:telegram       https://t.me/obuluslayer
 /// @notice A NEW, fully standalone contract. It is NOT part of the escrow settlement path and has NO
 ///         reference to any `ObulusEscrow`/`ObulusSubscriptionEscrow`/deal. It lets an agent (or the treasury) deposit
 ///         its OWN idle/surplus USDG — never escrow principal or bonds — and earn yield via a pluggable
@@ -52,6 +46,12 @@ import {IYieldSource} from "./interfaces/IYieldSource.sol";
 ///    pause/unpause, set a withdrawal fee bounded by MAX_WITHDRAW_FEE_BPS that accrues to the treasury}.
 ///    Switching the source moves USDG between the vault and a source the OWNER trusts — it can never send a
 ///    depositor's funds to the owner. CEI + ReentrancyGuard + SafeERC20 throughout.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract ObulusYieldVault is Ownable2Step, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 

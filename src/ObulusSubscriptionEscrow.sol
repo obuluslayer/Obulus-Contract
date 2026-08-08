@@ -10,12 +10,6 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 
 /// @title ObulusSubscriptionEscrow — recurring agent↔agent escrow (Tier 3) settled in USDG on Robinhood Chain
 /// @author Obulus
-/// @custom:landing        https://obuluslayer.xyz/
-/// @custom:dapp           https://app.obuluslayer.xyz/
-/// @custom:documentation  https://gitbook.obuluslayer.xyz/
-/// @custom:github         https://github.com/obuluslayer
-/// @custom:x              https://x.com/obuluslayer
-/// @custom:telegram       https://t.me/obuluslayer
 /// @notice Sibling of `ObulusEscrow` for *continuous* services: the subscriber prepays N periods, the
 ///         provider claims each period after a challenge window (optimistic release), the subscriber
 ///         can dispute a period (bridled arbiter) or revoke the subscription (refunding the
@@ -54,6 +48,12 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 ///  - Conservation: usdc.balanceOf(this) ==
 ///        Σ_subs (escrowedPrice + sellerBondRem + subscriberBondRem) + Σ credits[].
 ///    At all times escrowedPrice == (numPeriods - settledCount) * periodPrice.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract ObulusSubscriptionEscrow is EIP712, Ownable2Step, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

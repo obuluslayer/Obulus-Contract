@@ -11,12 +11,6 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 
 /// @title ObulusEscrow — agent↔agent conditional escrow settled in USDG on Robinhood Chain
 /// @author Obulus
-/// @custom:landing        https://obuluslayer.xyz/
-/// @custom:dapp           https://app.obuluslayer.xyz/
-/// @custom:documentation  https://gitbook.obuluslayer.xyz/
-/// @custom:github         https://github.com/obuluslayer
-/// @custom:x              https://x.com/obuluslayer
-/// @custom:telegram       https://t.me/obuluslayer
 /// @notice Non-custodial escrow for AI-agent commerce (Tier 2: optimistic release, arbiter on dispute).
 ///
 /// Design invariants:
@@ -26,6 +20,12 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 ///  - All payouts are pull-based (`credits` + `withdraw`) so a blocklisted/reverting party can never
 ///    brick a deal's transition or freeze a counterparty (the settlement token is upgradeable and has a blocklist).
 ///  - Every terminal path conserves funds exactly: sum(payouts + fees) == total deposited (no dust).
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract ObulusEscrow is IEscrow, EIP712, Ownable2Step, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

@@ -27,6 +27,12 @@ import {
 /// SINGLE-SIDED MODEL: to keep the adapter LP accounting in one token (USDC), this mock treats `currency0`
 /// as USDC and ignores `currency1` movement (a real single-sided/JIT or a USDC/USDC-like pool concept). The
 /// "liquidity" the adapter holds is tracked 1:1 in USDC units; fees are injected by the test via `accrueFees`.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract MockPoolManager is IPoolManagerMinimal {
     using SafeERC20 for IERC20;
 

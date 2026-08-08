@@ -7,6 +7,12 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 /// @notice Minimal ERC-1271 smart-account wallet: validates signatures against a single owner EOA.
 ///         Used to prove the escrow accepts agent smart-account signatures (not just EOAs) via
 ///         OpenZeppelin's SignatureChecker.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract MockERC1271 is IERC1271 {
     bytes4 internal constant MAGIC = 0x1626ba7e; // IERC1271.isValidSignature selector
     address public immutable owner;

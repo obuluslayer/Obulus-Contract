@@ -15,6 +15,12 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 ///         otherwise-dead `TokenMismatch` error live, and (b) ENFORCE on-chain that the unstake→withdraw
 ///         delay strictly exceeds the escrow's dispute-resolution window (`escrow.resolveTimeout()`), so
 ///         funds unstaked during a live dispute are still physically present when the arbiter slashes.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 interface IEscrowConfig {
     function usdc() external view returns (address);
     function resolveTimeout() external view returns (uint64);
@@ -22,12 +28,6 @@ interface IEscrowConfig {
 
 /// @title ObulusStakingVault — standing USDG collateral for agents, slashable on adjudicated fault
 /// @author Obulus
-/// @custom:landing        https://obuluslayer.xyz/
-/// @custom:dapp           https://app.obuluslayer.xyz/
-/// @custom:documentation  https://gitbook.obuluslayer.xyz/
-/// @custom:github         https://github.com/obuluslayer
-/// @custom:x              https://x.com/obuluslayer
-/// @custom:telegram       https://t.me/obuluslayer
 /// @notice A NEW, standalone auxiliary contract. It lets an agent post standing collateral that a
 ///         counterparty (or the protocol) can rely on beyond the per-deal bonds held by `ObulusEscrow`.
 ///         The vault READS `ObulusEscrow` to authorise a slash, but NEVER calls or mutates it.

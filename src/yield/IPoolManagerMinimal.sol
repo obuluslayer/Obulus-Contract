@@ -35,6 +35,12 @@ function toBalanceDelta(int128 _amount0, int128 _amount1) pure returns (BalanceD
     }
 }
 
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 library BalanceDeltaLibrary {
     function amount0(BalanceDelta bd) internal pure returns (int128 a0) {
         assembly ("memory-safe") {

@@ -5,6 +5,12 @@ pragma solidity 0.8.28;
 /// @notice The interface is the integration contract shared by the off-chain Hub, SDK and frontend.
 ///         Deals are created on-chain at `fund()` time from a seller-signed EIP-712 `Offer`; the funder
 ///         (`msg.sender`) is the buyer. All payouts are pull-based (`credits` + `withdraw`).
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 interface IEscrow {
     /// @dev `None` is the default for an uncreated deal id, so every guarded function reverts on it.
     enum State {

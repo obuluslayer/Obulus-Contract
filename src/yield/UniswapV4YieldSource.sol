@@ -16,12 +16,6 @@ import {
 
 /// @title UniswapV4YieldSource — a GENUINE-shape Uniswap v4 LP adapter as a ObulusYieldVault yield source
 /// @author Obulus
-/// @custom:landing        https://obuluslayer.xyz/
-/// @custom:dapp           https://app.obuluslayer.xyz/
-/// @custom:documentation  https://gitbook.obuluslayer.xyz/
-/// @custom:github         https://github.com/obuluslayer
-/// @custom:x              https://x.com/obuluslayer
-/// @custom:telegram       https://t.me/obuluslayer
 ///
 /// ╔══════════════════════════════════════════════════════════════════════════════════════════════╗
 /// ║  ⛔ NOT PRODUCTION READY — TEST SKELETON ONLY. DO NOT DEPLOY AS A LIVE YIELDVAULT SOURCE. ⛔   ║
@@ -57,6 +51,12 @@ import {
 /// deployed at a CREATE2 address whose low bits encode the enabled hook flags. None of that exists in this
 /// sandbox, so the adapter's accounting/shape is covered locally against `MockPoolManager`. The adapter
 /// itself is admin-gated to the vault and never touches any escrow funds.
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract UniswapV4YieldSource is IYieldSource, IUnlockCallback, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

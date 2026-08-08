@@ -15,6 +15,12 @@ import {IYieldSource} from "../interfaces/IYieldSource.sol";
 ///        models the principal-protected / 1:1-or-better configuration: a depositor always redeems principal
 ///        plus their fair share of accrued yield. (The lossy/AMM risk profile is exercised by the v4 adapter
 ///        path + MockPoolManager, not here.)
+/// @custom:landing        https://obuluslayer.xyz/
+/// @custom:dapp           https://app.obuluslayer.xyz/
+/// @custom:documentation  https://gitbook.obuluslayer.xyz/
+/// @custom:github         https://github.com/obuluslayer
+/// @custom:x              https://x.com/obuluslayer
+/// @custom:telegram       https://t.me/obuluslayer
 contract MockYieldSource is IYieldSource {
     using SafeERC20 for IERC20;
 
