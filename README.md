@@ -75,6 +75,17 @@ hardware wallet or multisig after deploying.
 | Robinhood Chain testnet | 46630 | `explorer.testnet.chain.robinhood.com` |
 | Robinhood Chain mainnet | 4663 | `robinhoodchain.blockscout.com` |
 
+## Links
+
+```
+Landing        : https://obuluslayer.xyz/
+DApp           : https://app.obuluslayer.xyz/
+Documentation  : https://gitbook.obuluslayer.xyz/
+GitHub         : https://github.com/obuluslayer
+X              : https://x.com/obuluslayer
+Telegram       : https://t.me/obuluslayer
+```
+
 ## Licence
 
 MIT
